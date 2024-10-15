@@ -10,8 +10,9 @@ import android.content.SharedPreferences;
 import android .content .pm .PackageManager;
 
 import android .Manifest;
+import android .util .Log;
 
-import android .support .v4 .content .LocalBroadcastManager;
+import androidx .localbroadcastmanager .content .LocalBroadcastManager;
 
 import org .apache .cordova .CallbackContext;
 import org .apache .cordova .CordovaInterface;
@@ -33,11 +34,14 @@ public class
 
     private String audioRecorder_Action;
     String [ ] audioRecorder_Permissions = {
-            Manifest .permission.RECORD_AUDIO  };
+            Manifest .permission.FOREGROUND_SERVICE_MICROPHONE  };
     private int audioCapture_duration;
 
     private Context context_application ;
     private CallbackContext callbackContext; /*Fields  */
+
+    private long audioCapture_Started_Time;
+    private int max_amplitude;
 
     /*Functions  */
     @Override
@@ -55,17 +59,41 @@ public class
                          CallbackContext callbackContext )
                         throws JSONException {
 
-        if(!action .equals ("audioCapture_Start" ) && !action .equals ("audioCapture_Stop" ) )
+        if(!action .equals ("audioCapture_Start" ) && !action .equals ("audioCapture_Stop" ) 
+        && !action .equals ("time" ) && !action .equals ("amplitude" ) )
             return false;
 
         this .callbackContext = callbackContext ;
         this .audioRecorder_Action = action;
         this .audioCapture_duration = args .optInt(0 , -1 );
+        Log .e ("audioCapture_Action: ",  action);
 
-        if(!cordova .hasPermission (Manifest .permission .RECORD_AUDIO ) ){
+        long audioCapture_Started_Time = this .audioCapture_Started_Time;
+        int amplitude = this .max_amplitude;
+        
+        if(action == "time" ) {
+            cordova .getThreadPool ( ) .execute (new Runnable ( ){
+                        public void run( ){
+                            callbackContext .success(String.valueOf(audioCapture_Started_Time )); }});
+            return true;}
+        
+
+        if(action == "amplitude" ) {
+            cordova .getThreadPool ( ) .execute (new Runnable ( ){
+                        public void run( ){
+                            callbackContext .success(String.valueOf(amplitude )); }});
+            return true; }
+          
+        Log .e ("audioCapture_Action2: ",  action);
+        if(!cordova .hasPermission (Manifest .permission .FOREGROUND_SERVICE_MICROPHONE ) ){
+            Log .e ("hasPermission", Manifest .permission .FOREGROUND_SERVICE_MICROPHONE );
             cordova .requestPermissions (this , 0 , audioRecorder_Permissions ); }
         else
+            Log .e ("audioCapture_Call_Action", "start");
             audioCapture_Call_Action( );
+
+        
+        
         return true; }
 
     public void
@@ -100,6 +128,12 @@ public class
                         public void run() {
                             callbackContext .error(msg ); }});
                     break;
+                // case "amplitude" :
+                //     this .max_amplitude = Integer .parseInt (msg );
+                //     break;  
+                // case "time" :
+                //     this .audioCapture_Started_Time = Long .parseLong (msg );
+                //     break;   
                 case "success" :
                     cordova .getThreadPool ( ) .execute (new Runnable ( ){
                         public void run( ){
@@ -115,6 +149,8 @@ public class
             case "audioCapture_Start":
                 intent .putExtra ("do" , "Record Sound" );
                 intent .putExtra ("audio capture duration" , audioCapture_duration );
+                this .audioCapture_Started_Time = 0;
+                this .max_amplitude = 0;
                 context_application .startService (intent );
                 break;
             case "audioCapture_Stop":

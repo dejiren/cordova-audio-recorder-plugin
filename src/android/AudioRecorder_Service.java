@@ -17,7 +17,9 @@ import android .media.MediaRecorder;
 
 import android .os .CountDownTimer;
 import android .os .IBinder;
-import android .support .v4 .content .LocalBroadcastManager;
+import androidx .localbroadcastmanager .content .LocalBroadcastManager;
+
+import android .content .pm .ServiceInfo;
 
 import android .util .Log;
 
@@ -129,11 +131,32 @@ public class
                 audioCapture_recorder .setAudioChannels (2 );
                 audioCapture_recorder .setAudioEncodingBitRate (32000 );
                 audioCapture_recorder .setOutputFile (audioCapture_fileName );
+                audioCapture_recorder .setMaxDuration (audioCapture_duration * 1000 );
                 audioCapture_recorder .prepare ( );
+                audioCapture_recorder .setOnInfoListener (new MediaRecorder .OnInfoListener ( ){
+                    @Override
+                    public void
+                                onInfo (MediaRecorder mr , int what , int extra ){
+                         Log .w ("AudioRecorder_Service_info", String.format("what: %d extra: %d", what, extra ));           
+                        if (what == MediaRecorder .MEDIA_RECORDER_INFO_MAX_DURATION_REACHED 
+                        || what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED  // cspell: disable-line
+                        || what == MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN ){
+                            stop_Recording ( ); }}});
+
+                audioCapture_recorder .setOnErrorListener (new MediaRecorder .OnErrorListener ( ){
+                    @Override
+                    public void
+                                onError (MediaRecorder mr , int what , int extra ){
+                         Log .w("AudioRecorder_Service_error", String.format("what: %d extra: %d", what, extra ));           
+                            
+                            stop_Recording ( ); }});
+                
                 audioCapture_recorder .start ( );
 
+              
                 //Cancel recording after audioCapture_duration , or on interrupt
-                //exceptions before audioCapture_countDownTimer , not nul
+                //exceptions before audioCapture_countDownTimer , not nul               
+                
                 audioCapture_countDownTimer = new CountDownTimer (audioCapture_duration * 1000 , 1000 ){
                     public void
                                 onTick (long millisUntilFinished ){
@@ -144,7 +167,15 @@ public class
                                 onFinish ( ){
                         stop_Recording ( ); }};
                 audioCapture_countDownTimer .start( );
-                startForeground (2 , sound_Recording_Notification ( ) ); }
+
+                Log .e("AudioRecorder_Service", "startForeground1");
+                if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .UPSIDE_DOWN_CAKE) { // android 34
+                    Log .e("AudioRecorder_Service", "startForeground2");
+                    startForeground (2 , sound_Recording_Notification ( ), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE  );
+                    intent .putExtra ("cause"  , "success" );
+                    intent .putExtra ("msg"  , audioCapture_fileName ); 
+                    localbroadCast_Manager .sendBroadcast (intent );}
+                else { startForeground (2 , sound_Recording_Notification ( ));}}
 
             catch (Exception exception ){
                 intent .putExtra ("cause"  , "failure" );
