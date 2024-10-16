@@ -59,6 +59,12 @@ public class
                     send_Action_Error ("Not recording anything" );
                     stopSelf ( ); }
                 break;
+
+            case "Record amplitude" :
+                if (thr_recordSound != null  ){                  
+                   get_amplitude( ); }
+           
+                break;
             case "Record Sound" :
                 if (thr_recordSound == null  ){
                     audioCapture_duration = intent .getIntExtra ("audio capture duration" , 60 );
@@ -74,6 +80,17 @@ public class
             returnIntent .putExtra ("cause"  , "failure" );
             returnIntent .putExtra ("msg"  , msg );
             localbroadCast_Manager .sendBroadcast (returnIntent ); }
+
+        private void get_amplitude ( ){
+            try {
+                float amplitude = (float) audioCapture_recorder .getMaxAmplitude( ) / 32762;
+                Intent returnIntent = new Intent ("audio recording stopped" );
+                returnIntent .putExtra ("cause"  , "amplitude" );
+                returnIntent .putExtra ("msg"  , String.valueOf(amplitude));
+                localbroadCast_Manager .sendBroadcast (returnIntent );
+            catch (Exception exception ){
+                }
+           }
 
     @Override
     public IBinder
@@ -156,7 +173,7 @@ public class
               
                 //Cancel recording after audioCapture_duration , or on interrupt
                 //exceptions before audioCapture_countDownTimer , not nul               
-                
+
                 audioCapture_countDownTimer = new CountDownTimer (audioCapture_duration * 1000 , 1000 ){
                     public void
                                 onTick (long millisUntilFinished ){
@@ -182,7 +199,7 @@ public class
                 intent .putExtra ("msg"  , exception .toString ( ) );
                 localbroadCast_Manager .sendBroadcast (intent );
                 stopSelf ( ); }}
-
+        
         public void
                     stop_Recording ( ){
             try {

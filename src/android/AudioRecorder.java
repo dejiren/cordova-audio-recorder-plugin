@@ -41,7 +41,6 @@ public class
     private CallbackContext callbackContext; /*Fields  */
 
     private long audioCapture_Started_Time;
-    private int max_amplitude;
 
     /*Functions  */
     @Override
@@ -69,20 +68,9 @@ public class
         Log .e ("audioCapture_Action: ",  action);
 
         long audioCapture_Started_Time = this .audioCapture_Started_Time;
-        int amplitude = this .max_amplitude;
         
-        if(action == "time" ) {
-            cordova .getThreadPool ( ) .execute (new Runnable ( ){
-                        public void run( ){
-                            callbackContext .success(String.valueOf(audioCapture_Started_Time )); }});
-            return true;}
         
 
-        if(action == "amplitude" ) {
-            cordova .getThreadPool ( ) .execute (new Runnable ( ){
-                        public void run( ){
-                            callbackContext .success(String.valueOf(amplitude )); }});
-            return true; }
           
         Log .e ("audioCapture_Action2: ",  action);
         if(!cordova .hasPermission (Manifest .permission .FOREGROUND_SERVICE_MICROPHONE ) ){
@@ -128,12 +116,12 @@ public class
                         public void run() {
                             callbackContext .error(msg ); }});
                     break;
-                // case "amplitude" :
-                //     this .max_amplitude = Integer .parseInt (msg );
-                //     break;  
-                // case "time" :
-                //     this .audioCapture_Started_Time = Long .parseLong (msg );
-                //     break;   
+                case "amplitude" :
+                    if(audioRecorder_Action.equals ("amplitude" ) ){
+                      cordova .getThreadPool ( ) .execute (new Runnable ( ){
+                        public void run() {
+                            callbackContext .success(msg ); }});}
+                     break;
                 case "success" :
                     cordova .getThreadPool ( ) .execute (new Runnable ( ){
                         public void run( ){
@@ -146,11 +134,14 @@ public class
         intent = new Intent(context_application , AudioRecorder_Service .class);
         String recovered_file_path   = get_Recovered_Recording_PAth ( );
         switch(audioRecorder_Action ){
+            case "amplitude":
+                intent .putExtra ("do" , "Record amplitude" );
+                context_application .startService (intent );
+                break;
             case "audioCapture_Start":
                 intent .putExtra ("do" , "Record Sound" );
                 intent .putExtra ("audio capture duration" , audioCapture_duration );
                 this .audioCapture_Started_Time = 0;
-                this .max_amplitude = 0;
                 context_application .startService (intent );
                 break;
             case "audioCapture_Stop":

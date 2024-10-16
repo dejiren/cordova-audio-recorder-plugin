@@ -14,10 +14,7 @@ exports.audioCapture_Stop = function (audioCapture_Ended, audioCapture_Failed) {
   exec(audioCapture_Ended, audioCapture_Failed, "AudioRecorder", "audioCapture_Stop", []);
 };
 
-exports.getTime = function () {
-  return exec(null, null, "AudioRecorder", "time", []);
-};
-
-exports.getAmplitude = function () {
-  return exec(null, null, "AudioRecorder", "amplitude", []);
+// success callback: returns the current amplitude
+exports.getAmplitude = function (onSuccess, failed) {
+  return exec(onSuccess, failed, "AudioRecorder", "amplitude", []);
 };
