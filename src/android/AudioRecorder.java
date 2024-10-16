@@ -42,11 +42,16 @@ public class
 
     private long audioCapture_Started_Time;
 
+    public static AudioRecorder instance = null;
+    static CordovaInterface cordovaInterface;
+
     /*Functions  */
     @Override
     public void
                 initialize (CordovaInterface cordova, CordovaWebView webView ){
         super .initialize (cordova , webView );
+        instance = this;
+        cordovaInterface = cordova;
         context_application = cordova .getActivity ( ) .getApplicationContext ( );
         register_Broadcast_Receiver ( ); }
 
@@ -65,19 +70,15 @@ public class
         this .callbackContext = callbackContext ;
         this .audioRecorder_Action = action;
         this .audioCapture_duration = args .optInt(0 , -1 );
-        Log .e ("audioCapture_Action: ",  action);
 
         long audioCapture_Started_Time = this .audioCapture_Started_Time;
         
-        
-
           
-        Log .e ("audioCapture_Action2: ",  action);
         if(!cordova .hasPermission (Manifest .permission .FOREGROUND_SERVICE_MICROPHONE ) ){
             Log .e ("hasPermission", Manifest .permission .FOREGROUND_SERVICE_MICROPHONE );
             cordova .requestPermissions (this , 0 , audioRecorder_Permissions ); }
         else
-            Log .e ("audioCapture_Call_Action", "start");
+            Log .e ("audioCapture_Call_Action", action);
             audioCapture_Call_Action( );
 
         
@@ -132,6 +133,7 @@ public class
                 audioCapture_Call_Action( ){
         Intent intent;
         intent = new Intent(context_application , AudioRecorder_Service .class);
+         
         String recovered_file_path   = get_Recovered_Recording_PAth ( );
         switch(audioRecorder_Action ){
             case "amplitude":

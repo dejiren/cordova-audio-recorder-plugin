@@ -1,9 +1,13 @@
 package com.twiserandom.cordova.plugin.audiorecorder;
 
+
 import android .app .Notification;
 import android .app .NotificationChannel;
 import android .app .NotificationManager;
 import android .app .Service;
+import android .app .PendingIntent;
+import android .app .Activity;
+import android .content .Context;
 
 import android .content .Intent;
 import android .content .SharedPreferences;
@@ -87,7 +91,7 @@ public class
                 Intent returnIntent = new Intent ("audio recording stopped" );
                 returnIntent .putExtra ("cause"  , "amplitude" );
                 returnIntent .putExtra ("msg"  , String.valueOf(amplitude));
-                localbroadCast_Manager .sendBroadcast (returnIntent );
+                localbroadCast_Manager .sendBroadcast (returnIntent ); }
             catch (Exception exception ){
                 }
            }
@@ -124,7 +128,6 @@ public class
     class
                 Record_Sound implements Runnable{
         Intent intent ;
-
         public
                     Record_Sound ( ){
             intent = new Intent ("audio recording stopped" ); }
@@ -185,9 +188,7 @@ public class
                         stop_Recording ( ); }};
                 audioCapture_countDownTimer .start( );
 
-                Log .e("AudioRecorder_Service", "startForeground1");
                 if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .UPSIDE_DOWN_CAKE) { // android 34
-                    Log .e("AudioRecorder_Service", "startForeground2");
                     startForeground (2 , sound_Recording_Notification ( ), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE  );
                     intent .putExtra ("cause"  , "success" );
                     intent .putExtra ("msg"  , audioCapture_fileName ); 
@@ -259,12 +260,21 @@ public class
 
             // Create the notification
             Notification .Builder notification_builder ;
+           
+            Activity cordovaActivity = AudioRecorder.instance.cordovaInterface.getActivity();
+            Context applicationContext = cordovaActivity.getApplicationContext();
+
+            Intent appIntent = new Intent(applicationContext, cordovaActivity.getClass( ));
+            appIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(applicationContext,0, appIntent, PendingIntent.FLAG_IMMUTABLE);
+    
 
             if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .O ){
                 notification_builder = new Notification
                         .Builder (AudioRecorder_Service .this , notification_channel_id )
                         .setSmallIcon(android .R .drawable .ic_media_play)
                         .setLargeIcon (notification_bitmap )
+                        .setContentIntent(pendingIntent)
                         .setContentTitle (notification_content_title )
                         .setContentText (notification_content_text ); }
             else {
@@ -272,6 +282,7 @@ public class
                         .Builder (AudioRecorder_Service .this  )
                         .setSmallIcon(android .R .drawable .ic_media_play)
                         .setLargeIcon (notification_bitmap )
+                        .setContentIntent(pendingIntent)
                         .setContentTitle (notification_content_title )
                         .setContentText (notification_content_text ); }
             return notification_builder .build ( ); }}}
