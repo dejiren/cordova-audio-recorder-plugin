@@ -88,7 +88,7 @@ public class
         private void get_amplitude ( ){
             try {
                 float amplitude = (float) audioCapture_recorder .getMaxAmplitude( ) / 32762;
-                Intent returnIntent = new Intent ("audio recording stopped" );
+                Intent returnIntent = new Intent ("audio recording amplitude" );
                 returnIntent .putExtra ("cause"  , "amplitude" );
                 returnIntent .putExtra ("msg"  , String.valueOf(amplitude));
                 localbroadCast_Manager .sendBroadcast (returnIntent ); }
