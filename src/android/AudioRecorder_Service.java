@@ -251,7 +251,7 @@ public class
             if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .O) {
                 notification_channel = new NotificationChannel(
                         notification_channel_id , notification_channel_name ,
-                        NotificationManager .IMPORTANCE_DEFAULT );
+                        NotificationManager .IMPORTANCE_LOW );
                 notification_channel .setDescription (notification_channel_description );
                 NotificationManager notificationManager = getSystemService (NotificationManager .class );
                 notificationManager .createNotificationChannel (notification_channel );  }
