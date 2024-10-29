@@ -27,7 +27,8 @@ import android .content .pm .ServiceInfo;
 
 import android .util .Log;
 
-import java .util .UUID;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class
             AudioRecorder_Service extends Service{
@@ -141,8 +142,11 @@ public class
                     start_Recording ( ) {
             try {
                 //Start recording
-                audioCapture_fileName = getCacheDir( ) .getAbsoluteFile( )
-                        + "/"  + UUID .randomUUID( ) .toString( ) + ".m4a";
+                // dejiren sound file name:`Rec ${dayjs().format('YYYY-MM-DD HH.mm.ss')}.m4a`
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
+
+                audioCapture_fileName = (getCacheDir( ) .getAbsoluteFile( )
+                        + "/Rec "  + sdf.format(new Date( )) + ".m4a" );
                 audioCapture_recorder = new MediaRecorder ( );
                 audioCapture_recorder .setAudioSource (MediaRecorder .AudioSource .MIC ) ;
                 audioCapture_recorder .setOutputFormat (MediaRecorder .OutputFormat .MPEG_4 );
