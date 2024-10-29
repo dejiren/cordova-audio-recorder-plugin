@@ -33,12 +33,15 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest/application">
             <service
-                android:name="com.twiserandom.cordova.plugin.audiorecorder.AudioRecorder_Service">
+                android:name="com.twiserandom.cordova.plugin.audiorecorder.AudioRecorder_Service"
+                android:foregroundServiceType="microphone" >
             </service> </config-file>
 
         <config-file target="AndroidManifest.xml" parent="/manifest" >
-            <uses-permission android:name="android.permission.RECORD_AUDIO" /> 
-            <uses-permission android:name = "android.permission.FOREGROUND_SERVICE" /> </config-file >
+            <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"  />
+            <uses-permission android:name = "android.permission.FOREGROUND_SERVICE" /> 
+            <uses-permission android:name = "android.permission.DETECT_SCREEN_RECORDING" /> 
+            </config-file >
 
         <source-file 
             src="src/android/AudioRecorder.java" 
@@ -48,6 +51,5 @@
             src="src/android/AudioRecorder_Service.java" 
             target-dir="src/com/twiserandom/cordova/plugin/audiorecorder/" /> 
 
-        <framework src="com.android.support:support-v4:27+"/> </platform>
+        <framework src="androidx.localbroadcastmanager:localbroadcastmanager:1.0.0"/> </platform>
 </plugin>
-

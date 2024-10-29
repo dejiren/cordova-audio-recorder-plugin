@@ -1,9 +1,13 @@
 package com.twiserandom.cordova.plugin.audiorecorder;
 
+
 import android .app .Notification;
 import android .app .NotificationChannel;
 import android .app .NotificationManager;
 import android .app .Service;
+import android .app .PendingIntent;
+import android .app .Activity;
+import android .content .Context;
 
 import android .content .Intent;
 import android .content .SharedPreferences;
@@ -17,11 +21,14 @@ import android .media.MediaRecorder;
 
 import android .os .CountDownTimer;
 import android .os .IBinder;
-import android .support .v4 .content .LocalBroadcastManager;
+import androidx .localbroadcastmanager .content .LocalBroadcastManager;
+
+import android .content .pm .ServiceInfo;
 
 import android .util .Log;
 
-import java .util .UUID;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 public class
             AudioRecorder_Service extends Service{
@@ -57,6 +64,12 @@ public class
                     send_Action_Error ("Not recording anything" );
                     stopSelf ( ); }
                 break;
+
+            case "Record amplitude" :
+                if (thr_recordSound != null  ){                  
+                   get_amplitude( ); }
+           
+                break;
             case "Record Sound" :
                 if (thr_recordSound == null  ){
                     audioCapture_duration = intent .getIntExtra ("audio capture duration" , 60 );
@@ -72,6 +85,17 @@ public class
             returnIntent .putExtra ("cause"  , "failure" );
             returnIntent .putExtra ("msg"  , msg );
             localbroadCast_Manager .sendBroadcast (returnIntent ); }
+
+        private void get_amplitude ( ){
+            try {
+                float amplitude = (float) audioCapture_recorder .getMaxAmplitude( ) / 32762;
+                Intent returnIntent = new Intent ("audio recording amplitude" );
+                returnIntent .putExtra ("cause"  , "amplitude" );
+                returnIntent .putExtra ("msg"  , String.valueOf(amplitude));
+                localbroadCast_Manager .sendBroadcast (returnIntent ); }
+            catch (Exception exception ){
+                }
+           }
 
     @Override
     public IBinder
@@ -105,7 +129,6 @@ public class
     class
                 Record_Sound implements Runnable{
         Intent intent ;
-
         public
                     Record_Sound ( ){
             intent = new Intent ("audio recording stopped" ); }
@@ -119,8 +142,11 @@ public class
                     start_Recording ( ) {
             try {
                 //Start recording
-                audioCapture_fileName = getCacheDir( ) .getAbsoluteFile( )
-                        + "/"  + UUID .randomUUID( ) .toString( ) + ".m4a";
+                // dejiren sound file name:`Rec ${dayjs().format('YYYY-MM-DD HH.mm.ss')}.m4a`
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH.mm.ss");
+
+                audioCapture_fileName = (getCacheDir( ) .getAbsoluteFile( )
+                        + "/Rec "  + sdf.format(new Date( )) + ".m4a" );
                 audioCapture_recorder = new MediaRecorder ( );
                 audioCapture_recorder .setAudioSource (MediaRecorder .AudioSource .MIC ) ;
                 audioCapture_recorder .setOutputFormat (MediaRecorder .OutputFormat .MPEG_4 );
@@ -129,11 +155,32 @@ public class
                 audioCapture_recorder .setAudioChannels (2 );
                 audioCapture_recorder .setAudioEncodingBitRate (32000 );
                 audioCapture_recorder .setOutputFile (audioCapture_fileName );
+                audioCapture_recorder .setMaxDuration (audioCapture_duration * 1000 );
                 audioCapture_recorder .prepare ( );
+                audioCapture_recorder .setOnInfoListener (new MediaRecorder .OnInfoListener ( ){
+                    @Override
+                    public void
+                                onInfo (MediaRecorder mr , int what , int extra ){
+                         Log .w ("AudioRecorder_Service_info", String.format("what: %d extra: %d", what, extra ));           
+                        if (what == MediaRecorder .MEDIA_RECORDER_INFO_MAX_DURATION_REACHED 
+                        || what == MediaRecorder.MEDIA_RECORDER_INFO_MAX_FILESIZE_REACHED  // cspell: disable-line
+                        || what == MediaRecorder.MEDIA_RECORDER_ERROR_UNKNOWN ){
+                            stop_Recording ( ); }}});
+
+                audioCapture_recorder .setOnErrorListener (new MediaRecorder .OnErrorListener ( ){
+                    @Override
+                    public void
+                                onError (MediaRecorder mr , int what , int extra ){
+                         Log .w("AudioRecorder_Service_error", String.format("what: %d extra: %d", what, extra ));           
+                            
+                            stop_Recording ( ); }});
+                
                 audioCapture_recorder .start ( );
 
+              
                 //Cancel recording after audioCapture_duration , or on interrupt
-                //exceptions before audioCapture_countDownTimer , not nul
+                //exceptions before audioCapture_countDownTimer , not nul               
+
                 audioCapture_countDownTimer = new CountDownTimer (audioCapture_duration * 1000 , 1000 ){
                     public void
                                 onTick (long millisUntilFinished ){
@@ -144,14 +191,20 @@ public class
                                 onFinish ( ){
                         stop_Recording ( ); }};
                 audioCapture_countDownTimer .start( );
-                startForeground (2 , sound_Recording_Notification ( ) ); }
+
+                if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .UPSIDE_DOWN_CAKE) { // android 34
+                    startForeground (2 , sound_Recording_Notification ( ), ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE  );
+                    intent .putExtra ("cause"  , "success" );
+                    intent .putExtra ("msg"  , audioCapture_fileName ); 
+                    localbroadCast_Manager .sendBroadcast (intent );}
+                else { startForeground (2 , sound_Recording_Notification ( ));}}
 
             catch (Exception exception ){
                 intent .putExtra ("cause"  , "failure" );
                 intent .putExtra ("msg"  , exception .toString ( ) );
                 localbroadCast_Manager .sendBroadcast (intent );
                 stopSelf ( ); }}
-
+        
         public void
                     stop_Recording ( ){
             try {
@@ -202,7 +255,7 @@ public class
             if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .O) {
                 notification_channel = new NotificationChannel(
                         notification_channel_id , notification_channel_name ,
-                        NotificationManager .IMPORTANCE_DEFAULT );
+                        NotificationManager .IMPORTANCE_LOW );
                 notification_channel .setDescription (notification_channel_description );
                 NotificationManager notificationManager = getSystemService (NotificationManager .class );
                 notificationManager .createNotificationChannel (notification_channel );  }
@@ -211,12 +264,21 @@ public class
 
             // Create the notification
             Notification .Builder notification_builder ;
+           
+            Activity cordovaActivity = AudioRecorder.instance.cordovaInterface.getActivity();
+            Context applicationContext = cordovaActivity.getApplicationContext();
+
+            Intent appIntent = new Intent(applicationContext, cordovaActivity.getClass( ));
+            appIntent.setFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            PendingIntent pendingIntent = PendingIntent.getActivity(applicationContext,0, appIntent, PendingIntent.FLAG_IMMUTABLE);
+    
 
             if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .O ){
                 notification_builder = new Notification
                         .Builder (AudioRecorder_Service .this , notification_channel_id )
                         .setSmallIcon(android .R .drawable .ic_media_play)
                         .setLargeIcon (notification_bitmap )
+                        .setContentIntent(pendingIntent)
                         .setContentTitle (notification_content_title )
                         .setContentText (notification_content_text ); }
             else {
@@ -224,6 +286,7 @@ public class
                         .Builder (AudioRecorder_Service .this  )
                         .setSmallIcon(android .R .drawable .ic_media_play)
                         .setLargeIcon (notification_bitmap )
+                        .setContentIntent(pendingIntent)
                         .setContentTitle (notification_content_title )
                         .setContentText (notification_content_text ); }
             return notification_builder .build ( ); }}}
