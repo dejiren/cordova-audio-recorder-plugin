@@ -197,9 +197,15 @@ public class
                     intent .putExtra ("cause"  , "success" );
                     intent .putExtra ("msg"  , audioCapture_fileName ); 
                     localbroadCast_Manager .sendBroadcast (intent );}
-                else { startForeground (2 , sound_Recording_Notification ( ));}}
+                else { 
+                    Log .e ("startForeground" , "android startForeground");
+                    startForeground (2 , sound_Recording_Notification ( ));
+                    intent .putExtra ("cause"  , "success" );
+                    intent .putExtra ("msg"  , audioCapture_fileName ); 
+                    localbroadCast_Manager .sendBroadcast (intent );}}
 
             catch (Exception exception ){
+                Log .e ("audioCapture_recorder_exception" , exception .toString ( ),  exception);
                 intent .putExtra ("cause"  , "failure" );
                 intent .putExtra ("msg"  , exception .toString ( ) );
                 localbroadCast_Manager .sendBroadcast (intent );
@@ -215,6 +221,7 @@ public class
                 intent .putExtra ("cause"  , "success" );
                 intent .putExtra ("msg"  , audioCapture_fileName ); }
             catch (Exception exception ){
+                Log .e ("audioCapture_recorder_stop_Recording" , exception .toString ( ),  exception);
                 intent .putExtra ("cause"  , "failure" );
                 intent .putExtra ("msg"  , exception .toString ( ) ); }
             finally {
