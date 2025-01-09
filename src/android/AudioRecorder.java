@@ -33,8 +33,10 @@ public class
     final String fnlStr_abrupt_term_recording = "abrupt_term_recorder";
 
     private String audioRecorder_Action;
-    String [ ] audioRecorder_Permissions = {
-            Manifest .permission.FOREGROUND_SERVICE_MICROPHONE  };
+    String [ ] audioRecorder_Permissions_33 = { // android 33以下
+            Manifest .permission.RECORD_AUDIO  };
+    String [ ] audioRecorder_Permissions_UPSIDE_DOWN_CAKE = { // android  33
+            Manifest .permission.FOREGROUND_SERVICE_MICROPHONE};
     private int audioCapture_duration;
 
     private Context context_application ;
@@ -77,11 +79,21 @@ public class
         this .audioCapture_duration = args .optInt(0 , -1 );
 
         long audioCapture_Started_Time = this .audioCapture_Started_Time;
-        
           
-        if(!cordova .hasPermission (Manifest .permission .FOREGROUND_SERVICE_MICROPHONE ) ){
-            Log .e ("hasPermission", Manifest .permission .FOREGROUND_SERVICE_MICROPHONE );
-            cordova .requestPermissions (this , 0 , audioRecorder_Permissions ); }
+        if (android .os .Build .VERSION .SDK_INT >= android .os .Build .VERSION_CODES .UPSIDE_DOWN_CAKE) { // android 34
+           if(cordova .hasPermission (Manifest .permission .FOREGROUND_SERVICE_MICROPHONE ) ){
+                Log .e ("need Permission-1", Manifest .permission .FOREGROUND_SERVICE_MICROPHONE );
+                Log .e ("audioCapture_Call_Action", action);
+                audioCapture_Call_Action( ); } 
+            
+            else {
+                 cordova .requestPermissions (this , 0 , audioRecorder_Permissions_UPSIDE_DOWN_CAKE ); }
+        }
+        else  if(!cordova .hasPermission (Manifest .permission .RECORD_AUDIO ) ){ //android 33
+            Log .e ("need Permission-2", Manifest .permission .RECORD_AUDIO );
+      
+            cordova .requestPermissions (this , 0 , audioRecorder_Permissions_33 ); }
+
         else
             Log .e ("audioCapture_Call_Action", action);
             audioCapture_Call_Action( );

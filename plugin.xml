@@ -39,9 +39,10 @@
 
         <config-file target="AndroidManifest.xml" parent="/manifest" >
             <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE"  />
+            <uses-permission android:name="android.permission.RECORD_AUDIO" /> 
             <uses-permission android:name = "android.permission.FOREGROUND_SERVICE" /> 
             <uses-permission android:name = "android.permission.DETECT_SCREEN_RECORDING" /> 
-            </config-file >
+        </config-file >
 
         <source-file 
             src="src/android/AudioRecorder.java" 
