@@ -198,7 +198,6 @@ public class
                     intent .putExtra ("msg"  , audioCapture_fileName ); 
                     localbroadCast_Manager .sendBroadcast (intent );}
                 else { 
-                    Log .e ("startForeground" , "android startForeground");
                     startForeground (2 , sound_Recording_Notification ( ));
                     intent .putExtra ("cause"  , "success" );
                     intent .putExtra ("msg"  , audioCapture_fileName ); 
